@@ -4,97 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>猫箱TTS情绪增强设置</title>
-    <style>
-        /* 猫箱插件统一的折叠样式 */
-        .plugin-setting {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background-color: white;
-        }
-        
-        .plugin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #f0f0f0;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .plugin-name {
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .plugin-arrow {
-            font-size: 16px;
-            transition: transform 0.3s ease;
-        }
-        
-        .plugin-content {
-            padding: 15px;
-            display: none;
-        }
-        
-        .plugin-setting.expanded .plugin-content {
-            display: block;
-        }
-        
-        .plugin-setting.expanded .plugin-arrow {
-            transform: rotate(180deg);
-        }
-        
-        /* 设置项样式 */
-        .setting-group {
-            margin-bottom: 20px;
-        }
-        
-        .setting-item {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-        
-        input[type="text"],
-        input[type="password"],
-        select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        
-        input[type="checkbox"] {
-            margin-right: 8px;
-        }
-        
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-        
-        .btn:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <!-- 不添加额外样式，使用猫箱现有样式 -->
 </head>
 <body>
     <div class="plugin-setting" id="mxtts-setting">
-        <div class="plugin-header">
+        <div class="plugin-header" style="cursor: pointer;">
             <span class="plugin-name">猫箱TTS情绪增强</span>
             <span class="plugin-arrow">▼</span>
         </div>
