@@ -1,12 +1,11 @@
 {
-    "display_name": "猫箱TTS情绪增强",
-    "loading_order": 10,
-    "requires": [],
-    "optional": [],
-    "js": "index.js",
-    "css": "",
-    "version": "1.0.0",
-    "author": "自制",
-    "homePage": "",
-    "auto_update": false
+  "display_name": "猫箱TTS情绪增强",
+  "loading_order": 10,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "自制",
+  "version": "1.0.0",
+  "homePage": ""
 }
