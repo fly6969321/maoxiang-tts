@@ -5,29 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>猫箱TTS情绪增强设置</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
+        /* 猫箱插件统一的折叠样式 */
+        .plugin-setting {
+            border: 1px solid #ccc;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            background-color: white;
         }
         
-        h2 {
+        .plugin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .plugin-name {
+            font-weight: 500;
             color: #333;
-            margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
         }
         
+        .plugin-arrow {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        
+        .plugin-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .plugin-setting.expanded .plugin-content {
+            display: block;
+        }
+        
+        .plugin-setting.expanded .plugin-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* 设置项样式 */
         .setting-group {
             margin-bottom: 20px;
         }
@@ -65,129 +84,95 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            margin-top: 10px;
         }
         
         .btn:hover {
             background-color: #45a049;
         }
-        
-        /* 折叠功能样式 */
-        .collapsible {
-            background-color: #f1f1f1;
-            color: #444;
-            cursor: pointer;
-            padding: 18px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 15px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        
-        .active, .collapsible:hover {
-            background-color: #ddd;
-        }
-        
-        .content {
-            padding: 0 18px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.2s ease-out;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-        }
-        
-        .content-inner {
-            padding: 15px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>猫箱TTS情绪增强</h2>
-        
-        <!-- 折叠按钮 -->
-        <button class="collapsible">猫箱TTS情绪增强设置</button>
-        <div class="content">
-            <div class="content-inner">
-                <!-- TTS设置部分 -->
-                <div class="setting-group">
-                    <h3>TTS设置</h3>
-                    
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="enabled"> 启用插件
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="ttsUrl">TTS Server 地址</label>
-                        <input type="text" id="ttsUrl" placeholder="wss://audio5-normal-hl.myparallelstory.com/internal/api/v1/ws">
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="appkey">AppKey</label>
-                        <input type="text" id="appkey" placeholder="WQuVLKMGRo">
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="defaultVoice">默认 voice_id</label>
-                        <input type="text" id="defaultVoice" placeholder="ICL_xxxxxxxxx">
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="format">音频格式</label>
-                        <select id="format">
-                            <option value="mp3">MP3</option>
-                            <option value="pcm">PCM</option>
-                        </select>
-                    </div>
+    <div class="plugin-setting" id="mxtts-setting">
+        <div class="plugin-header">
+            <span class="plugin-name">猫箱TTS情绪增强</span>
+            <span class="plugin-arrow">▼</span>
+        </div>
+        <div class="plugin-content">
+            <!-- TTS设置部分 -->
+            <div class="setting-group">
+                <h3>TTS设置</h3>
+                
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="enabled"> 启用插件
+                    </label>
                 </div>
                 
-                <!-- LLM设置部分 -->
-                <div class="setting-group">
-                    <h3>LLM设置</h3>
-                    
-                    <div class="setting-item">
-                        <label for="apiBaseUrl">API Base URL</label>
-                        <input type="text" id="apiBaseUrl" placeholder="https://api.openai.com/v1">
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="apiKey">API Key</label>
-                        <input type="password" id="apiKey" placeholder="您的API密钥">
-                    </div>
-                    
-                    <div class="setting-item">
-                        <label for="model">模型名称</label>
-                        <input type="text" id="model" placeholder="gpt-4o-mini">
-                    </div>
+                <div class="setting-item">
+                    <label for="ttsUrl">TTS Server 地址</label>
+                    <input type="text" id="ttsUrl" placeholder="wss://audio5-normal-hl.myparallelstory.com/internal/api/v1/ws">
                 </div>
                 
-                <!-- 保存按钮 -->
-                <button class="btn" onclick="saveSettings()">保存设置</button>
+                <div class="setting-item">
+                    <label for="appkey">AppKey</label>
+                    <input type="text" id="appkey" placeholder="WQuVLKMGRo">
+                </div>
+                
+                <div class="setting-item">
+                    <label for="defaultVoice">默认 voice_id</label>
+                    <input type="text" id="defaultVoice" placeholder="ICL_xxxxxxxxx">
+                </div>
+                
+                <div class="setting-item">
+                    <label for="format">音频格式</label>
+                    <select id="format">
+                        <option value="mp3">MP3</option>
+                        <option value="pcm">PCM</option>
+                    </select>
+                </div>
             </div>
+            
+            <!-- LLM设置部分 -->
+            <div class="setting-group">
+                <h3>LLM设置</h3>
+                
+                <div class="setting-item">
+                    <label for="apiBaseUrl">API Base URL</label>
+                    <input type="text" id="apiBaseUrl" placeholder="https://api.openai.com/v1">
+                </div>
+                
+                <div class="setting-item">
+                    <label for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" placeholder="您的API密钥">
+                </div>
+                
+                <div class="setting-item">
+                    <label for="model">模型名称</label>
+                    <input type="text" id="model" placeholder="gpt-4o-mini">
+                </div>
+            </div>
+            
+            <!-- 保存按钮 -->
+            <button class="btn" onclick="saveSettings()">保存设置</button>
         </div>
     </div>
 
     <script>
-        // 折叠功能JavaScript
-        var coll = document.getElementsByClassName("collapsible");
-        var i;
-        
-        for (i = 0; i < coll.length; i++) {
-            coll[i].addEventListener("click", function() {
-                this.classList.toggle("active");
-                var content = this.nextElementSibling;
-                if (content.style.maxHeight) {
-                    content.style.maxHeight = null;
-                } else {
-                    content.style.maxHeight = content.scrollHeight + "px";
-                }
+        // 猫箱插件统一的折叠功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const setting = document.getElementById('mxtts-setting');
+            const header = setting.querySelector('.plugin-header');
+            const arrow = setting.querySelector('.plugin-arrow');
+            
+            // 初始状态：展开
+            setting.classList.add('expanded');
+            
+            header.addEventListener('click', function() {
+                setting.classList.toggle('expanded');
+                arrow.textContent = setting.classList.contains('expanded') ? '▼' : '►';
             });
-        }
+        });
         
         // 保存设置函数
         function saveSettings() {
@@ -209,12 +194,6 @@
             // 显示保存成功提示
             alert('设置已保存！');
         }
-        
-        // 页面加载时恢复设置（如果需要）
-        window.onload = function() {
-            // 这里可以添加从localStorage或服务器加载设置的逻辑
-            // 例如：loadSettings();
-        };
     </script>
 </body>
 </html>
