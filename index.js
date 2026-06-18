@@ -1,77 +1,109 @@
-const EXT_NAME = "maoxiang-tts";
+const EXT_NAME = 'maoxiang-tts';
 
-/**
- * 安全挂载（兼容源码版 + 扩展版）
- */
-(function () {
+const DEFAULT_SETTINGS = {
+    enabled: false,
+    ttsUrl: 'wss://audio5-normal-hl.myparallelstory.com/internal/api/v1/ws',
+    appkey: 'WQuVLKMGRo',
+    defaultVoice: 'ICL_5561786db01b',
+    format: 'mp3',
+    llmUrl: 'https://api.openai.com/v1',
+    llmKey: '',
+    llmModel: 'gpt-4o-mini',
+    llmPrompt: '',
+    voiceMap: '',
+};
 
-    function log(...args) {
-        console.log("[猫箱TTS]", ...args);
-    }
+let eventSource, event_types, getContext, extension_settings, saveSettingsDebounced;
 
-    function getSettings() {
-        if (!window.extension_settings) {
-            window.extension_settings = {};
-        }
-        if (!window.extension_settings[EXT_NAME]) {
-            window.extension_settings[EXT_NAME] = {};
-        }
-        return window.extension_settings[EXT_NAME];
-    }
+// 等酒馆环境加载完成
+jQuery(async () => {
+    const ctx = SillyTavern?.getContext?.() || window;
 
-    function init() {
-        log("开始加载...");
+    eventSource = ctx.eventSource;
+    event_types = ctx.event_types;
+    getContext = ctx.getContext;
+    extension_settings = ctx.extension_settings;
+    saveSettingsDebounced = ctx.saveSettingsDebounced;
 
-        const s = getSettings();
+    loadSettings();
+    initTabs();
 
-        // 如果 settings.html 存在，就尝试插入
-        if (window.$ && $("#extensions_settings").length) {
+    $('#mxtts-save-basic').on('click', saveBasic);
+    $('#mxtts-save-llm').on('click', saveLLM);
+    $('#mxtts-save-voices').on('click', saveVoices);
 
-            fetch("scripts/extensions/third-party/maoxiang-tts/settings.html")
-                .then(r => r.text())
-                .then(html => {
-                    $("#extensions_settings").append(html);
-                    log("UI 已注入");
-                    bindUI();
-                })
-                .catch(err => {
-                    log("UI加载失败（但JS正常）", err);
-                });
+    eventSource?.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
+    eventSource?.on(event_types.MESSAGE_UPDATED, onMessageReceived);
 
-        } else {
-            log("未找到UI容器，仅运行逻辑模式");
-        }
+    console.log('[MaoXiangTTS] loaded');
+});
 
-        log("加载完成 ✔");
-    }
+function loadSettings() {
+    extension_settings[EXT_NAME] = Object.assign(
+        {},
+        DEFAULT_SETTINGS,
+        extension_settings[EXT_NAME] || {}
+    );
 
-    function bindUI() {
+    const s = extension_settings[EXT_NAME];
 
-        $("#mxtts-save").on("click", () => {
+    $('#mxtts-enabled').prop('checked', s.enabled);
+    $('#mxtts-tts-url').val(s.ttsUrl);
+    $('#mxtts-appkey').val(s.appkey);
+    $('#mxtts-default-voice').val(s.defaultVoice);
+    $('#mxtts-format').val(s.format);
+    $('#mxtts-llm-url').val(s.llmUrl);
+    $('#mxtts-llm-key').val(s.llmKey);
+    $('#mxtts-llm-model').val(s.llmModel);
+    $('#mxtts-llm-prompt').val(s.llmPrompt);
+    $('#mxtts-voice-map').val(s.voiceMap);
+}
 
-            const s = getSettings();
+function initTabs() {
+    $(document).on('click', '.mxtts-tab-btn', function () {
+        $('.mxtts-tab-btn').removeClass('active');
+        $(this).addClass('active');
 
-            s.enabled = $("#mxtts-enabled").prop("checked");
-            s.ttsUrl = $("#mxtts-tts-url").val();
-            s.appkey = $("#mxtts-appkey").val();
-            s.defaultVoice = $("#mxtts-default-voice").val();
-            s.format = $("#mxtts-format").val();
+        const tab = $(this).data('tab');
 
-            if (window.saveSettingsDebounced) {
-                window.saveSettingsDebounced();
-            }
+        $('.mxtts-tab').hide();
+        $(`#mxtts-tab-${tab}`).show();
+    });
+}
 
-            $("#mxtts-msg").text("已保存");
+// 保存
+function saveBasic() {
+    const s = extension_settings[EXT_NAME];
+    s.enabled = $('#mxtts-enabled').prop('checked');
+    s.ttsUrl = $('#mxtts-tts-url').val();
+    s.appkey = $('#mxtts-appkey').val();
+    s.defaultVoice = $('#mxtts-default-voice').val();
+    s.format = $('#mxtts-format').val();
+    saveSettingsDebounced();
+}
 
-            setTimeout(() => $("#mxtts-msg").text(""), 1500);
-        });
-    }
+function saveLLM() {
+    const s = extension_settings[EXT_NAME];
+    s.llmUrl = $('#mxtts-llm-url').val();
+    s.llmKey = $('#mxtts-llm-key').val();
+    s.llmModel = $('#mxtts-llm-model').val();
+    s.llmPrompt = $('#mxtts-llm-prompt').val();
+    saveSettingsDebounced();
+}
 
-    // 🔥 关键：强制挂载执行（避免“没触发入口”问题）
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
-    }
+function saveVoices() {
+    extension_settings[EXT_NAME].voiceMap = $('#mxtts-voice-map').val();
+    saveSettingsDebounced();
+}
 
-})();
+// ===== 消息入口（先留着不动）=====
+async function onMessageReceived(msgIdx) {
+    const s = extension_settings[EXT_NAME];
+    if (!s.enabled) return;
+
+    const ctx = getContext?.();
+    const msg = ctx?.chat?.[msgIdx];
+    if (!msg || msg.is_user) return;
+
+    console.log('[MaoXiangTTS] message:', msg.mes);
+}
