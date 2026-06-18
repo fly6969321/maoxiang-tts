@@ -1,65 +1,77 @@
 const EXT_NAME = "maoxiang-tts";
 
-function init() {
-    const s = window.extension_settings;
+/**
+ * 安全挂载（兼容源码版 + 扩展版）
+ */
+(function () {
 
-    if (!s[EXT_NAME]) {
-        s[EXT_NAME] = {};
+    function log(...args) {
+        console.log("[猫箱TTS]", ...args);
     }
 
-    loadUI();
-}
+    function getSettings() {
+        if (!window.extension_settings) {
+            window.extension_settings = {};
+        }
+        if (!window.extension_settings[EXT_NAME]) {
+            window.extension_settings[EXT_NAME] = {};
+        }
+        return window.extension_settings[EXT_NAME];
+    }
 
-async function loadUI() {
-
-    const html = await $.get(
-        "scripts/extensions/third-party/maoxiang-tts/settings.html"
-    );
-
-    const container = $("#extensions_settings");
-
-    container.append(html);
-
-    bindUI();
-    renderUI();
-
-    console.log("[MaoXiangTTS] UI loaded");
-}
-
-function getSettings() {
-    return window.extension_settings[EXT_NAME];
-}
-
-function renderUI() {
-    const s = getSettings();
-
-    $("#mxtts-enabled").prop("checked", s.enabled);
-    $("#mxtts-tts-url").val(s.ttsUrl);
-    $("#mxtts-appkey").val(s.appkey);
-    $("#mxtts-default-voice").val(s.defaultVoice);
-    $("#mxtts-format").val(s.format);
-}
-
-function bindUI() {
-
-    $("#mxtts-save").on("click", () => {
+    function init() {
+        log("开始加载...");
 
         const s = getSettings();
 
-        s.enabled = $("#mxtts-enabled").prop("checked");
-        s.ttsUrl = $("#mxtts-tts-url").val();
-        s.appkey = $("#mxtts-appkey").val();
-        s.defaultVoice = $("#mxtts-default-voice").val();
-        s.format = $("#mxtts-format").val();
+        // 如果 settings.html 存在，就尝试插入
+        if (window.$ && $("#extensions_settings").length) {
 
-        window.saveSettingsDebounced();
+            fetch("scripts/extensions/third-party/maoxiang-tts/settings.html")
+                .then(r => r.text())
+                .then(html => {
+                    $("#extensions_settings").append(html);
+                    log("UI 已注入");
+                    bindUI();
+                })
+                .catch(err => {
+                    log("UI加载失败（但JS正常）", err);
+                });
 
-        $("#mxtts-msg").text("已保存");
+        } else {
+            log("未找到UI容器，仅运行逻辑模式");
+        }
 
-        setTimeout(() => {
-            $("#mxtts-msg").text("");
-        }, 1500);
-    });
-}
+        log("加载完成 ✔");
+    }
 
-init();
+    function bindUI() {
+
+        $("#mxtts-save").on("click", () => {
+
+            const s = getSettings();
+
+            s.enabled = $("#mxtts-enabled").prop("checked");
+            s.ttsUrl = $("#mxtts-tts-url").val();
+            s.appkey = $("#mxtts-appkey").val();
+            s.defaultVoice = $("#mxtts-default-voice").val();
+            s.format = $("#mxtts-format").val();
+
+            if (window.saveSettingsDebounced) {
+                window.saveSettingsDebounced();
+            }
+
+            $("#mxtts-msg").text("已保存");
+
+            setTimeout(() => $("#mxtts-msg").text(""), 1500);
+        });
+    }
+
+    // 🔥 关键：强制挂载执行（避免“没触发入口”问题）
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+})();
