@@ -1,106 +1,97 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>猫箱TTS情绪增强设置</title>
-</head>
-<body>
-    <div class="plugin-setting" id="mxtts-setting">
-        <div class="plugin-header" onclick="toggleMxttsSetting()">
-            <span class="plugin-name">猫箱TTS情绪增强</span>
-            <span class="plugin-arrow">▼</span>
-        </div>
-        <div class="plugin-content">
-            <!-- TTS设置部分 -->
-            <div class="setting-group">
-                <h3>TTS设置</h3>
-                
-                <div class="setting-item">
-                    <label>
-                        <input type="checkbox" id="enabled"> 启用插件
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <label for="ttsUrl">TTS Server 地址</label>
-                    <input type="text" id="ttsUrl" placeholder="wss://audio5-normal-hl.myparallelstory.com/internal/api/v1/ws">
-                </div>
-                
-                <div class="setting-item">
-                    <label for="appkey">AppKey</label>
-                    <input type="text" id="appkey" placeholder="WQuVLKMGRo">
-                </div>
-                
-                <div class="setting-item">
-                    <label for="defaultVoice">默认 voice_id</label>
-                    <input type="text" id="defaultVoice" placeholder="ICL_xxxxxxxxx">
-                </div>
-                
-                <div class="setting-item">
-                    <label for="format">音频格式</label>
-                    <select id="format">
-                        <option value="mp3">MP3</option>
-                        <option value="pcm">PCM</option>
-                    </select>
-                </div>
-            </div>
-            
-            <!-- LLM设置部分 -->
-            <div class="setting-group">
-                <h3>LLM设置</h3>
-                
-                <div class="setting-item">
-                    <label for="apiBaseUrl">API Base URL</label>
-                    <input type="text" id="apiBaseUrl" placeholder="https://api.openai.com/v1">
-                </div>
-                
-                <div class="setting-item">
-                    <label for="apiKey">API Key</label>
-                    <input type="password" id="apiKey" placeholder="您的API密钥">
-                </div>
-                
-                <div class="setting-item">
-                    <label for="model">模型名称</label>
-                    <input type="text" id="model" placeholder="gpt-4o-mini">
-                </div>
-            </div>
-            
-            <!-- 保存按钮 -->
-            <button class="btn" onclick="saveSettings()">保存设置</button>
-        </div>
-    </div>
+<div id="maoxiang-tts-settings" style="padding:10px;font-size:14px;">
 
-    <script>
-        function toggleMxttsSetting() {
-            const setting = document.getElementById('mxtts-setting');
-            const content = setting.querySelector('.plugin-content');
-            const arrow = setting.querySelector('.plugin-arrow');
-            
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                arrow.textContent = '▼';
-            } else {
-                content.style.display = 'none';
-                arrow.textContent = '►';
-            }
-        }
-        
-        function saveSettings() {
-            const settings = {
-                enabled: document.getElementById('enabled').checked,
-                ttsUrl: document.getElementById('ttsUrl').value,
-                appkey: document.getElementById('appkey').value,
-                defaultVoice: document.getElementById('defaultVoice').value,
-                format: document.getElementById('format').value,
-                apiBaseUrl: document.getElementById('apiBaseUrl').value,
-                apiKey: document.getElementById('apiKey').value,
-                model: document.getElementById('model').value
-            };
-            
-            console.log('保存的设置:', settings);
-            alert('设置已保存！');
-        }
-    </script>
-</body>
-</html>
+  <!-- Tab 导航 -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+    <button class="mxtts-tab-btn active" data-tab="basic">基础设置</button>
+    <button class="mxtts-tab-btn" data-tab="llm">LLM设置</button>
+    <button class="mxtts-tab-btn" data-tab="voices">角色音色</button>
+  </div>
+
+  <!-- 基础设置 -->
+  <div class="mxtts-tab" id="mxtts-tab-basic">
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <input type="checkbox" id="mxtts-enabled"> 启用插件
+    </label>
+    <label style="display:block;margin-bottom:6px;">TTS Server 地址</label>
+    <input id="mxtts-tts-url" type="text" placeholder="wss://audio5-normal-hl.myparallelstory.com/internal/api/v1/ws"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">appkey</label>
+    <input id="mxtts-appkey" type="text" placeholder="WQuVLKMGRo"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">默认 voice_id（无角色匹配时使用）</label>
+    <input id="mxtts-default-voice" type="text" placeholder="ICL_5561786db01b"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">音频格式</label>
+    <select id="mxtts-format" style="width:100%;margin-bottom:10px;padding:6px;">
+      <option value="mp3">MP3</option>
+      <option value="pcm">PCM</option>
+    </select>
+    <button id="mxtts-save-basic" style="padding:6px 16px;">保存</button>
+    <span id="mxtts-save-basic-msg" style="margin-left:8px;color:green;font-size:12px;"></span>
+  </div>
+
+  <!-- LLM设置 -->
+  <div class="mxtts-tab" id="mxtts-tab-llm" style="display:none;">
+    <label style="display:block;margin-bottom:6px;">LLM API Base URL</label>
+    <input id="mxtts-llm-url" type="text" placeholder="https://api.openai.com/v1"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">API Key</label>
+    <input id="mxtts-llm-key" type="password" placeholder="sk-..."
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">模型名</label>
+    <input id="mxtts-llm-model" type="text" placeholder="gpt-4o-mini"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">情绪提取 Prompt（{text} 会被替换为原文）</label>
+    <textarea id="mxtts-llm-prompt" rows="8"
+      style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;font-size:12px;"></textarea>
+    <div style="font-size:11px;color:#888;margin-bottom:10px;">
+      可用情绪标签：[happy] [sad] [angry] [surprised] [fear] [hate] [neutral] [excited]
+      [gentle] [shy] [coquettish] [teasing] [doting] [sympathetic] [grateful] [expectant]
+      [playful] [relaxed] [lazy] [wronged] [disappointed] [jealous] [nervous] [serious]
+      [confused] [hesitant] [firm] [arrogant] [humble] [sarcastic] [contemptuous]
+      [tender] [lovey-dovey] [depressed] [guilt] [pain] [coldness] [shout] [crazy]
+      [whispering] [breath] [hum]
+    </div>
+    <button id="mxtts-save-llm" style="padding:6px 16px;">保存</button>
+    <span id="mxtts-save-llm-msg" style="margin-left:8px;color:green;font-size:12px;"></span>
+  </div>
+
+  <!-- 角色音色绑定 -->
+  <div class="mxtts-tab" id="mxtts-tab-voices" style="display:none;">
+    <div style="font-size:12px;color:#888;margin-bottom:8px;">
+      每行一条，格式：角色名:voice_id<br>
+      例如：小樱:ICL_5561786db01b
+    </div>
+    <textarea id="mxtts-voice-map" rows="12"
+      style="width:100%;padding:6px;box-sizing:border-box;font-family:monospace;font-size:13px;"></textarea>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button id="mxtts-save-voices" style="padding:6px 16px;">保存</button>
+      <span id="mxtts-save-voices-msg" style="color:green;font-size:12px;align-self:center;"></span>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.mxtts-tab-btn {
+  padding: 5px 12px;
+  border: 1px solid #888;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.mxtts-tab-btn.active {
+  background: #7a6a5a;
+  color: #fff;
+  border-color: #7a6a5a;
+}
+#maoxiang-tts-settings input,
+#maoxiang-tts-settings textarea,
+#maoxiang-tts-settings select {
+  background: var(--SmartThemeBlurTintColor, #2a2a2a);
+  color: var(--SmartThemeBodyColor, #eee);
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+</style>
