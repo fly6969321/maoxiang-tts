@@ -259,17 +259,20 @@ async function onMessageReceived(msgIdx) {
 
 // ── 入口 ─────────────────────────────────────────────
 jQuery(async () => {
-    // 1. 把 settings.html 注入到酒馆的"扩展设置"面板
     try {
-        const html = await fetch(`/scripts/extensions/third-party/${EXT_NAME}/settings.html`)
-            .then(r => r.text());
-        $('#extensions_settings').append(html);
+        // 动态获取当前扩展的目录路径（最稳妥的方法）
+        const settingsHtml = await fetch('./scripts/extensions/third-party/maoxiang-tts/settings.html')
+            .then(response => response.text());
+        
+        // 插入到扩展设置面板中
+        $('#extensions_settings').append(settingsHtml);
+        console.log('[MaoXiangTTS] settings.html 已加载');
     } catch (e) {
-        console.error('[MaoXiangTTS] settings.html 加载失败，检查路径:', e);
-        return;
+        console.error('[MaoXiangTTS] settings.html 加载失败:', e);
+        return; // 如果没加载成功，后面的代码会报错，所以直接返回
     }
 
-    // 2. 再初始化控件（此时 DOM 里才有 #mxtts-* 元素）
+    // 2. 再初始化控件
     loadSettings();
     initTabs();
 
