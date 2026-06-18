@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>猫箱TTS情绪增强设置</title>
-    <!-- 不添加额外样式，使用猫箱现有样式 -->
 </head>
 <body>
     <div class="plugin-setting" id="mxtts-setting">
-        <div class="plugin-header" style="cursor: pointer;">
+        <div class="plugin-header" onclick="toggleMxttsSetting()">
             <span class="plugin-name">猫箱TTS情绪增强</span>
             <span class="plugin-arrow">▼</span>
         </div>
@@ -73,24 +72,21 @@
     </div>
 
     <script>
-        // 猫箱插件统一的折叠功能
-        document.addEventListener('DOMContentLoaded', function() {
+        function toggleMxttsSetting() {
             const setting = document.getElementById('mxtts-setting');
-            const header = setting.querySelector('.plugin-header');
+            const content = setting.querySelector('.plugin-content');
             const arrow = setting.querySelector('.plugin-arrow');
             
-            // 初始状态：展开
-            setting.classList.add('expanded');
-            
-            header.addEventListener('click', function() {
-                setting.classList.toggle('expanded');
-                arrow.textContent = setting.classList.contains('expanded') ? '▼' : '►';
-            });
-        });
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '►';
+            }
+        }
         
-        // 保存设置函数
         function saveSettings() {
-            // 获取所有设置值
             const settings = {
                 enabled: document.getElementById('enabled').checked,
                 ttsUrl: document.getElementById('ttsUrl').value,
@@ -102,10 +98,7 @@
                 model: document.getElementById('model').value
             };
             
-            // 这里可以添加保存到localStorage或发送到服务器的逻辑
             console.log('保存的设置:', settings);
-            
-            // 显示保存成功提示
             alert('设置已保存！');
         }
     </script>
