@@ -1,1 +1,18 @@
+#mxtts-root {
+    padding: 12px;
+}
 
+#mxtts-root h3,
+#mxtts-root h4 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#mxtts-root label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+#mxtts-root input,
+#mxtts-root textarea,
+#m
