@@ -99,7 +99,6 @@ function getVoiceMap() {
 
 function getVoiceForChar(charName) {
     const map = getVoiceMap();
-    // 模糊匹配：角色名包含关键词即可
     for (const [key, vid] of Object.entries(map)) {
         if (charName && charName.includes(key)) return vid;
     }
@@ -130,7 +129,6 @@ async function injectEmotionTags(text) {
         const result = data?.choices?.[0]?.message?.content?.trim();
         return result || text;
     } catch (e) {
-        console.warn('[MaoXiangTTS] LLM调用失败，使用原文:', e);
         return text;
     }
 }
@@ -149,7 +147,6 @@ function sendTTS(text, voiceId) {
 
         const ws = new WebSocket(url);
         const audioChunks = [];
-        let taskStarted = false;
 
         ws.onopen = () => {
             const startMsg = {
@@ -158,14 +155,8 @@ function sendTTS(text, voiceId) {
                 namespace: 'BidirectionalTTS',
                 payload: JSON.stringify({
                     speaker: voiceId,
-                    audio_config: {
-                        format: s.format,
-                        sample_rate: 24000,
-                    },
-                    extra: {
-                        post_process: { pitch: 0, speech_rate: 1.0 },
-                        max_length_to_filter_parenthesis: 0,
-                    },
+                    audio_config: { format: s.format, sample_rate: 24000 },
+                    extra: { post_process: { pitch: 0, speech_rate: 1.0 }, max_length_to_filter_parenthesis: 0 },
                 }),
             };
             ws.send(JSON.stringify(startMsg));
@@ -176,15 +167,11 @@ function sendTTS(text, voiceId) {
                 try {
                     const msg = JSON.parse(evt.data);
                     if (msg.event === 'TaskStarted') {
-                        // 发送文本
                         ws.send(JSON.stringify({ payload: JSON.stringify({ text }) }));
-                        // 结束任务
                         ws.send(JSON.stringify({ appkey: s.appkey, event: 'FinishTask', namespace: 'BidirectionalTTS' }));
-                        taskStarted = true;
                     } else if (msg.event === 'TaskFinished') {
                         ws.close();
                     } else if (msg.type === 3 && msg.buffer) {
-                        // base64音频数据
                         const bin = atob(msg.buffer);
                         const arr = new Uint8Array(bin.length);
                         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -209,7 +196,6 @@ function sendTTS(text, voiceId) {
         };
 
         ws.onerror = (e) => reject(e);
-
         setTimeout(() => { try { ws.close(); } catch(e){} reject(new Error('超时')); }, 15000);
     });
 }
@@ -233,46 +219,90 @@ async function onMessageReceived(msgIdx) {
 
     const ctx = getContext();
     const msg = ctx.chat?.[msgIdx];
-    if (!msg || msg.is_user) return; // 只处理角色消息
+    if (!msg || msg.is_user) return;
 
     const charName = msg.name || ctx.name2 || '';
     const rawText = msg.mes || '';
     if (!rawText.trim()) return;
 
     try {
-        // 1. LLM注入情绪标签
         const taggedText = await injectEmotionTags(rawText);
-        console.log(`[MaoXiangTTS] ${charName} → 标注后文本:`, taggedText);
-
-        // 2. 查角色对应voice_id
         const voiceId = getVoiceForChar(charName);
-
-        // 3. 发给豆包TTS合成
         const blob = await sendTTS(taggedText, voiceId);
-
-        // 4. 播放
         await playBlob(blob);
-    } catch (e) {
-        console.error('[MaoXiangTTS] 出错:', e);
-    }
+    } catch (e) {}
 }
+
+// ── 将 HTML 直接内联 ──────────────────────────────────
+const SETTINGS_HTML = `
+<div id="maoxiang-tts-settings" style="padding:10px;font-size:14px;">
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+    <button class="mxtts-tab-btn active" data-tab="basic">基础设置</button>
+    <button class="mxtts-tab-btn" data-tab="llm">LLM设置</button>
+    <button class="mxtts-tab-btn" data-tab="voices">角色音色</button>
+  </div>
+
+  <div class="mxtts-tab" id="mxtts-tab-basic">
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <input type="checkbox" id="mxtts-enabled"> 启用插件
+    </label>
+    <label style="display:block;margin-bottom:6px;">TTS Server 地址</label>
+    <input id="mxtts-tts-url" type="text" placeholder="wss://..." style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">appkey</label>
+    <input id="mxtts-appkey" type="text" style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">默认 voice_id</label>
+    <input id="mxtts-default-voice" type="text" style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">音频格式</label>
+    <select id="mxtts-format" style="width:100%;margin-bottom:10px;padding:6px;">
+      <option value="mp3">MP3</option>
+      <option value="pcm">PCM</option>
+    </select>
+    <button id="mxtts-save-basic" style="padding:6px 16px;">保存</button>
+    <span id="mxtts-save-basic-msg" style="margin-left:8px;color:green;font-size:12px;"></span>
+  </div>
+
+  <div class="mxtts-tab" id="mxtts-tab-llm" style="display:none;">
+    <label style="display:block;margin-bottom:6px;">LLM API Base URL</label>
+    <input id="mxtts-llm-url" type="text" placeholder="https://api.openai.com/v1" style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">API Key</label>
+    <input id="mxtts-llm-key" type="password" placeholder="sk-..." style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">模型名</label>
+    <input id="mxtts-llm-model" type="text" style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;">
+    <label style="display:block;margin-bottom:6px;">情绪提取 Prompt</label>
+    <textarea id="mxtts-llm-prompt" rows="6" style="width:100%;margin-bottom:10px;padding:6px;box-sizing:border-box;font-size:12px;"></textarea>
+    <button id="mxtts-save-llm" style="padding:6px 16px;">保存</button>
+    <span id="mxtts-save-llm-msg" style="margin-left:8px;color:green;font-size:12px;"></span>
+  </div>
+
+  <div class="mxtts-tab" id="mxtts-tab-voices" style="display:none;">
+    <div style="font-size:12px;color:#888;margin-bottom:8px;">
+      每行一条，格式：角色名:voice_id
+    </div>
+    <textarea id="mxtts-voice-map" rows="8" style="width:100%;padding:6px;box-sizing:border-box;font-family:monospace;font-size:13px;"></textarea>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button id="mxtts-save-voices" style="padding:6px 16px;">保存</button>
+      <span id="mxtts-save-voices-msg" style="color:green;font-size:12px;align-self:center;"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+.mxtts-tab-btn { padding: 5px 12px; border: 1px solid #888; background: transparent; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.mxtts-tab-btn.active { background: #7a6a5a; color: #fff; border-color: #7a6a5a; }
+#maoxiang-tts-settings input, #maoxiang-tts-settings textarea, #maoxiang-tts-settings select {
+  background: var(--SmartThemeBlurTintColor, #2a2a2a);
+  color: var(--SmartThemeBodyColor, #eee);
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+</style>
+`;
 
 // ── 入口 ─────────────────────────────────────────────
 jQuery(async () => {
-    try {
-        // 动态获取当前扩展的目录路径（最稳妥的方法）
-        const settingsHtml = await fetch('./scripts/extensions/third-party/maoxiang-tts/settings.html')
-            .then(response => response.text());
-        
-        // 插入到扩展设置面板中
-        $('#extensions_settings').append(settingsHtml);
-        console.log('[MaoXiangTTS] settings.html 已加载');
-    } catch (e) {
-        console.error('[MaoXiangTTS] settings.html 加载失败:', e);
-        return; // 如果没加载成功，后面的代码会报错，所以直接返回
-    }
+    // 直接把 HTML 拼进去，不依赖外部文件读取
+    $('#extensions_settings').append(SETTINGS_HTML);
 
-    // 2. 再初始化控件
     loadSettings();
     initTabs();
 
@@ -282,6 +312,4 @@ jQuery(async () => {
 
     eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
     eventSource.on(event_types.MESSAGE_UPDATED, onMessageReceived);
-
-    console.log('[MaoXiangTTS] 插件加载完成');
 });
